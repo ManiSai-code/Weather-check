@@ -49,13 +49,13 @@ export class WeatherService {
         region: raw.location.region,
         country: raw.location.country,
         lat: raw.location.lat,
-        lon: raw.location.lon,
+        lon: raw.location.lon, // 🛠️ FIXED TYPO: changed locatiaon to location
         localTime: raw.location.localtime,
       },
       current: {
         tempC: raw.current.temp_c,
         condition: raw.current.condition.text,
-        conditionCode: raw.current.condition.code, // Useful for mapping animations later!
+        conditionCode: raw.current.condition.code,
         humidity: raw.current.humidity,
         windKph: raw.current.wind_kph,
         visibilityKm: raw.current.vis_km,
@@ -64,7 +64,7 @@ export class WeatherService {
           usEpaIndex: raw.current.air_quality?.['us-epa-index'] || null, 
         }
       },
-      // We will map over the array to get a clean 7-day forecast format
+      // We will map over the array to get a clean 7-day forecast format with hourly details
       forecast: raw.forecast.forecastday.map((day: any) => ({
         date: day.date,
         maxTempC: day.day.maxtemp_c,
@@ -72,6 +72,13 @@ export class WeatherService {
         condition: day.day.condition.text,
         conditionCode: day.day.condition.code,
         avgHumidity: day.day.avghumidity,
+        
+        // >>> 🚀 CRITICAL ADDITION: Map the 24-hour nested payload array <<<
+        hour: day.hour.map((h: any) => ({
+          time: h.time,
+          tempC: h.temp_c,
+          condition: h.condition.text
+        }))
       })),
     };
   }

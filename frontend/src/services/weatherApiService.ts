@@ -1,5 +1,12 @@
 const BACKEND_URL = 'http://localhost:5000/api';
 
+// 1. Declare the shape of a single hour data point
+export interface HourlyForecast {
+  time: string;
+  tempC: number;
+  condition: string;
+}
+
 export interface WeatherData {
   location: {
     name: string;
@@ -21,6 +28,7 @@ export interface WeatherData {
       usEpaIndex: number | null;
     };
   };
+  // 2. Add the hour tracking array straight into the forecast array objects
   forecast: Array<{
     date: string;
     maxTempC: number;
@@ -28,6 +36,7 @@ export interface WeatherData {
     condition: string;
     conditionCode: number;
     avgHumidity: number;
+    hour: HourlyForecast[]; // <-- Added right here!
   }>;
 }
 
@@ -49,7 +58,6 @@ export class WeatherApiService {
 
       return await response.json();
     } catch (error: unknown) {
-      // We convert the unknown error safely to an Error object message
       const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
       console.error("Error inside WeatherApiService:", errorMessage);
       throw new Error(errorMessage);

@@ -2,14 +2,16 @@ import { useState, useEffect } from 'react';
 import { Search, Wind, Droplets, Eye, ShieldAlert, Calendar, CloudSun, Map as MapIcon } from 'lucide-react';
 import { WeatherApiService, WeatherData } from './services/weatherApiService.js';
 import './index.css';
+import AudioImmersion from './components/AudioImmersion';
 import WeatherMap from './components/WeatherMap';
 import { formatTo12Hour } from './utils/formatters';
+//import { WeatherData } from './types';
 export default function App() {
-  const [searchQuery, setSearchQuery] = useState('London');
+  const [searchQuery, setSearchQuery] = useState('Anantapur');
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+const [selectedHourIdx, setSelectedHourIdx] = useState<number>(-1); // -1 means live current weather data
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
@@ -26,9 +28,9 @@ export default function App() {
     }
   };
 
-  // Run an initial load for London on launch
+  // Run an initial load for Anantapur on launch
   useEffect(() => {
-    WeatherApiService.fetchWeather('London')
+    WeatherApiService.fetchWeather('Anantapur')
       .then(data => setWeatherData(data))
       .catch(err => setError(err.message));
   }, []);
@@ -39,7 +41,7 @@ export default function App() {
       <header className="max-w-7xl mx-auto mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
-            AeroMap <span className="text-sm font-medium text-slate-400">Weather Studio</span>
+            🐲Mani's <span className="text-sm font-medium text-slate-400">Weather Studio</span>
           </h1>
         </div>
 
@@ -56,6 +58,15 @@ export default function App() {
             <Search className="w-4 h-4 text-white" />
           </button>
         </form>
+        {/* Dynamic Soundscape Controller */}
+{weatherData && (
+  <AudioImmersion 
+    condition={selectedHourIdx === -1 
+      ? weatherData.current.condition 
+      : weatherData.forecast[0]?.hour?.[selectedHourIdx]?.condition || weatherData.current.condition
+    } 
+  />
+)}
       </header>
 
       {/* Main Framework Grid */}
@@ -160,19 +171,72 @@ export default function App() {
           
           {/* Dynamic Map Placement Target Context */}
           {/* Dynamic Map Placement Target Context */}
+{/* Dynamic Map Placement Target Context */}
+{/* Dynamic Map Placement Target Context */}
 <div className="flex-1 w-full h-full relative bg-slate-950">
   {weatherData && (
     <WeatherMap
       lat={weatherData.location.lat}
       lon={weatherData.location.lon}
       cityName={weatherData.location.name}
-      condition={weatherData.current.condition}
+      condition={selectedHourIdx === -1 
+        ? weatherData.current.condition 
+        : weatherData.forecast[0]?.hour?.[selectedHourIdx]?.condition || weatherData.current.condition
+      }
     />
   )}
 </div>
         </section>
 
       </main>
+
+      {/* FOOTER VIEWPORT: Weather Time Travel Horizon System Slider */}
+      {weatherData && weatherData.forecast[0] && (
+        <footer className="max-w-7xl mx-auto mt-8 bg-slate-900/40 border border-slate-800/80 rounded-3xl p-6 backdrop-blur-md">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
+            <div>
+              <h4 className="text-sm font-bold tracking-wider uppercase text-slate-400">
+                Atmospheric Time-Travel System Clock
+              </h4>
+              <p className="text-xs text-slate-500">
+  {selectedHourIdx === -1 
+    ? `Displaying Real-Time Live Data feeds` 
+    : `Simulating forecasted projection for: ${weatherData.forecast[0]?.hour?.[selectedHourIdx]?.time?.split(' ')?.[1] || 'Loading...'} (${weatherData.forecast[0]?.hour?.[selectedHourIdx]?.tempC ?? '--'}°C)`
+  }
+</p>
+            </div>
+            
+            <button
+              onClick={() => setSelectedHourIdx(-1)}
+              className={`px-4 py-1.5 rounded-full text-xs font-mono font-bold transition-colors ${selectedHourIdx === -1 ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'bg-slate-950 text-slate-400 border border-slate-800 hover:border-slate-700'}`}
+            >
+              Reset to Real-Time Feed
+            </button>
+          </div>
+
+          {/* Master Range Input Track */}
+          <div className="relative pt-2">
+            <input
+              type="range"
+              min="-1"
+              max="23"
+              value={selectedHourIdx}
+              onChange={(e) => setSelectedHourIdx(parseInt(e.target.value, 10))}
+              className="w-full h-2 bg-slate-950 rounded-lg appearance-none cursor-pointer accent-blue-500 border border-slate-800/60"
+            />
+            <div className="w-full flex justify-between text-[10px] font-mono text-slate-600 mt-2 px-1">
+              <span>Live Feed</span>
+              <span>12:00 AM</span>
+              <span>04:00 AM</span>
+              <span>08:00 AM</span>
+              <span>12:00 PM</span>
+              <span>04:00 PM</span>
+              <span>08:00 PM</span>
+              <span>11:00 PM</span>
+            </div>
+          </div>
+        </footer>
+      )}
     </div>
   );
 }
