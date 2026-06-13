@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, Wind, Droplets, Eye, ShieldAlert, Calendar, CloudSun, Map as MapIcon } from 'lucide-react';
 import { WeatherApiService, WeatherData } from './services/weatherApiService.js';
 import './index.css';
+import WeatherMap from './components/WeatherMap';
 import { formatTo12Hour } from './utils/formatters';
 export default function App() {
   const [searchQuery, setSearchQuery] = useState('London');
@@ -158,19 +159,17 @@ export default function App() {
           </div>
           
           {/* Dynamic Map Placement Target Context */}
-          <div className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-950/50 relative">
-            <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px] opacity-30" />
-            
-            <div className="z-10 text-center max-w-sm">
-              <div className="w-12 h-12 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mx-auto mb-4 animate-pulse">
-                <MapIcon className="w-6 h-6 text-blue-400" />
-              </div>
-              <h5 className="font-semibold text-slate-200 mb-1">Map Visualization Engine Pending</h5>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Our structural dashboard setup is safe. Next, we will introduce our mapping library to layer physical particle rendering systems over this viewport bounds.
-              </p>
-            </div>
-          </div>
+          {/* Dynamic Map Placement Target Context */}
+<div className="flex-1 w-full h-full relative bg-slate-950">
+  {weatherData && (
+    <WeatherMap
+      lat={weatherData.location.lat}
+      lon={weatherData.location.lon}
+      cityName={weatherData.location.name}
+      condition={weatherData.current.condition}
+    />
+  )}
+</div>
         </section>
 
       </main>
