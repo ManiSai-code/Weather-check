@@ -6,11 +6,13 @@ import AudioImmersion from './components/AudioImmersion';
 import WeatherMap from './components/WeatherMap';
 import { formatTo12Hour } from './utils/formatters';
 //import { WeatherData } from './types';
+import ThemeToggle from './components/ThemeToggle';
 export default function App() {
   const [searchQuery, setSearchQuery] = useState('Anantapur');
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
 const [selectedHourIdx, setSelectedHourIdx] = useState<number>(-1); // -1 means live current weather data
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,12 +38,13 @@ const [selectedHourIdx, setSelectedHourIdx] = useState<number>(-1); // -1 means 
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50 p-4 md:p-8">
+    <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
       {/* Header Container */}
+      
       <header className="max-w-7xl mx-auto mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
-            🐲Mani's <span className="text-sm font-medium text-slate-400">Weather Studio</span>
+            👾Mani's <span className="text-sm font-medium text-slate-400">Weather Studio</span>
           </h1>
         </div>
 
@@ -58,6 +61,7 @@ const [selectedHourIdx, setSelectedHourIdx] = useState<number>(-1); // -1 means 
             <Search className="w-4 h-4 text-white" />
           </button>
         </form>
+        <ThemeToggle isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
         {/* Dynamic Soundscape Controller */}
 {weatherData && (
   <AudioImmersion 
