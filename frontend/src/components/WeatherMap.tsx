@@ -1,9 +1,8 @@
 import { useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap } from 'react-leaflet';
 import L from 'leaflet';
-
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-
 import 'leaflet/dist/leaflet.css';
+import MapWeatherOverlay from './MapWeatherOverlay';
 
 // Fix for default Leaflet icon paths failing under Vite compilation paths
 import iconMarker from 'leaflet/dist/images/marker-icon.png';
@@ -27,10 +26,6 @@ interface WeatherMapProps {
   condition: string;
 }
 
-/**
- * Sub-component that handles forcing the Leaflet map framework to smoothly 
- * pan and change focus when the parent coordinate coordinates alter.
- */
 function RecenterMap({ lat, lon }: { lat: number; lon: number }) {
   const map = useMap();
   useEffect(() => {
@@ -48,23 +43,36 @@ export default function WeatherMap({ lat, lon, cityName, condition }: WeatherMap
         scrollWheelZoom={true}
         className="w-full h-full z-0"
       >
-        {/* OpenStreetMap sleek dark-styled mapping tiles via CartoDB */}
-        {/* OpenStreetMap Vibrant Full-Color Map Tiles */}
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         
-        <Marker position={[lat, lon]}>
+        {/* CORE MARKER SYSTEM */}
+        <Marker key={`${lat}-${lon}-${condition}`} position={[lat, lon]}>
+          
+          {/* LAYER A: Invisible Permanent Tooltip Context
+            This forces React-Leaflet to cleanly render our Canvas/CSS particle engine 
+            exactly locked to the map marker coordinates!
+          */}
+          <Tooltip 
+            permanent 
+            direction="center" 
+            className="!bg-transparent !border-none !shadow-none !p-0 pointer-events-none"
+          >
+            <MapWeatherOverlay condition={condition} />
+          </Tooltip>
+
+          {/* LAYER B: Standard Interactive Details Metadata Popup */}
           <Popup>
             <div className="p-1 text-slate-900 font-sans">
               <h6 className="font-bold text-sm text-slate-900">{cityName}</h6>
               <p className="text-xs text-slate-600 font-medium mt-0.5">Atmosphere: {condition}</p>
             </div>
           </Popup>
+
         </Marker>
 
-        {/* Triggers panning changes safely whenever coordinates shift */}
         <RecenterMap lat={lat} lon={lon} />
       </MapContainer>
     </div>
