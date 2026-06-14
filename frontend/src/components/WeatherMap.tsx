@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import MapWeatherOverlay from './MapWeatherOverlay';
@@ -24,6 +24,7 @@ interface WeatherMapProps {
   lon: number;
   cityName: string;
   condition: string;
+  onLocationSelect?: (lat: number, lon: number) => void; // 💡 Callback prop to update state
 }
 
 function RecenterMap({ lat, lon }: { lat: number; lon: number }) {
@@ -34,7 +35,20 @@ function RecenterMap({ lat, lon }: { lat: number; lon: number }) {
   return null;
 }
 
-export default function WeatherMap({ lat, lon, cityName, condition }: WeatherMapProps) {
+// 💡 NEW COMPONENT: Listens to mouse clicks anywhere on the spatial layer grid
+function MapClickHandler({ onLocationSelect }: { onLocationSelect?: (lat: number, lon: number) => void }) {
+  useMapEvents({
+    click: (e) => {
+      if (onLocationSelect) {
+        // Formats coordinates as a comma-separated string required by your WeatherService
+        onLocationSelect(e.latlng.lat, e.latlng.lng);
+      }
+    },
+  });
+  return null;
+}
+
+export default function WeatherMap({ lat, lon, cityName, condition, onLocationSelect }: WeatherMapProps) {
   return (
     <div className="w-full h-full min-h-[450px] relative rounded-2xl overflow-hidden shadow-inner border border-slate-900">
       <MapContainer
@@ -48,13 +62,13 @@ export default function WeatherMap({ lat, lon, cityName, condition }: WeatherMap
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         
+        {/* INTERCEPT GRID CLICKS */}
+        <MapClickHandler onLocationSelect={onLocationSelect} />
+        
         {/* CORE MARKER SYSTEM */}
         <Marker key={`${lat}-${lon}-${condition}`} position={[lat, lon]}>
           
-          {/* LAYER A: Invisible Permanent Tooltip Context
-            This forces React-Leaflet to cleanly render our Canvas/CSS particle engine 
-            exactly locked to the map marker coordinates!
-          */}
+          {/* LAYER A: Invisible Permanent Tooltip Context */}
           <Tooltip 
             permanent 
             direction="center" 

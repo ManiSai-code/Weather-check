@@ -77,7 +77,8 @@ export class WeatherService {
         hour: day.hour.map((h: any) => ({
           time: h.time,
           tempC: h.temp_c,
-          condition: h.condition.text
+          condition: h.condition.text,
+          chanceOfRain: h.chance_of_rain
         }))
       })),
     };

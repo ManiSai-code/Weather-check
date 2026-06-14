@@ -14,21 +14,28 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
 const [selectedHourIdx, setSelectedHourIdx] = useState<number>(-1); // -1 means live current weather data
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
+  const handleSearch = async (locationOrEvent: React.FormEvent | string) => {
+  // 1. Check if the input is a form submission event
+  if (typeof locationOrEvent !== 'string' && 'preventDefault' in locationOrEvent) {
+    locationOrEvent.preventDefault();
+  }
 
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await WeatherApiService.fetchWeather(searchQuery);
-      setWeatherData(data);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to retrieve weather data.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // 2. Determine the target location query string
+  const query = typeof locationOrEvent === 'string' ? locationOrEvent : searchQuery;
+  if (!query.trim()) return;
+
+  setLoading(true);
+  setError(null);
+  try {
+    // 3. Fire off the network fetch using the dynamically assigned query string
+    const data = await WeatherApiService.fetchWeather(query);
+    setWeatherData(data);
+  } catch (err: unknown) {
+    setError(err instanceof Error ? err.message : 'Failed to retrieve weather data.');
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Run an initial load for Anantapur on launch
   useEffect(() => {
@@ -38,40 +45,41 @@ const [selectedHourIdx, setSelectedHourIdx] = useState<number>(-1); // -1 means 
   }, []);
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
-      {/* Header Container */}
-      
-      <header className="max-w-7xl mx-auto mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
-            👾Mani's <span className="text-sm font-medium text-slate-400">Weather Studio</span>
-          </h1>
-        </div>
+  <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+    {/* Header Container */}
+    
+    {/* 🚀 FIXED: Added pt-6 for top breathing room, and responsive side padding */}
+    <header className="max-w-7xl mx-auto pt-6 px-4 xl:px-0 mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div>
+        <h1 className="text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
+          👾Mani's <span className="text-sm font-medium text-slate-400">Weather Studio</span>
+        </h1>
+      </div>
 
-        {/* Search Bar Form */}
-        <form onSubmit={handleSearch} className="relative w-full md:w-96">
-          <input
-            type="text"
-            placeholder="Search city, state, or country..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-900/60 border border-slate-800 rounded-full py-2.5 pl-5 pr-12 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-all shadow-inner"
-          />
-          <button type="submit" className="absolute right-2 top-1.5 p-1.5 bg-blue-600 hover:bg-blue-500 rounded-full transition-colors">
-            <Search className="w-4 h-4 text-white" />
-          </button>
-        </form>
-        <ThemeToggle isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
-        {/* Dynamic Soundscape Controller */}
-{weatherData && (
-  <AudioImmersion 
-    condition={selectedHourIdx === -1 
-      ? weatherData.current.condition 
-      : weatherData.forecast[0]?.hour?.[selectedHourIdx]?.condition || weatherData.current.condition
-    } 
-  />
-)}
-      </header>
+      {/* Search Bar Form */}
+      <form onSubmit={handleSearch} className="relative w-full md:w-96">
+        <input
+          type="text"
+          placeholder="Search city, state, or country..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full bg-slate-900/60 border border-slate-800 rounded-full py-2.5 pl-5 pr-12 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-all shadow-inner"
+        />
+        <button type="submit" className="absolute right-2 top-1.5 p-1.5 bg-blue-600 hover:bg-blue-500 rounded-full transition-colors">
+          <Search className="w-4 h-4 text-white" />
+        </button>
+      </form>
+      <ThemeToggle isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
+      {/* Dynamic Soundscape Controller */}
+      {weatherData && (
+        <AudioImmersion 
+          condition={selectedHourIdx === -1 
+            ? weatherData.current.condition 
+            : weatherData.forecast[0]?.hour?.[selectedHourIdx]?.condition || weatherData.current.condition
+          } 
+        />
+      )}
+    </header>
 
       {/* Main Framework Grid */}
       <main className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -125,32 +133,76 @@ const [selectedHourIdx, setSelectedHourIdx] = useState<number>(-1); // -1 means 
                     <span className="text-xs text-slate-500">Visibility</span>
                     <span className="text-sm font-medium">{weatherData.current.visibilityKm} km</span>
                   </div>
-                </div>
+                  {/* 🌧️ CHANCES OF RAIN METRIC CARD */}
+{/* 🌧️ CHANCES OF RAIN - SPANNING FULL WIDTH RECTANGLE */}
+<div className="col-span-full p-5 rounded-3xl bg-slate-900/40 border border-slate-800/80 backdrop-blur-md flex flex-col justify-between w-full">
+  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+    <div>
+      <p className="text-xs font-mono uppercase tracking-wider text-slate-400">Rain Probability</p>
+      <p className="text-3xl font-bold tracking-tight text-blue-400 mt-1">
+        {selectedHourIdx === -1 
+          ? `${weatherData.forecast[0]?.hour?.[0]?.chanceOfRain ?? 0}%` 
+          : `${weatherData.forecast[0]?.hour?.[selectedHourIdx]?.chanceOfRain ?? 0}%`
+        }
+      </p>
+    </div>
+    
+    {/* Optional status text badge to make the extra space look production-grade */}
+    <div className="text-right hidden sm:block">
+      <span className="text-xs font-mono px-2.5 py-1 rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20">
+        Timeline Analysis Matrix
+      </span>
+    </div>
+  </div>
+
+  <div className="w-full bg-slate-950 h-2 rounded-full mt-4 overflow-hidden border border-slate-800/40">
+    <div 
+      className="bg-blue-500 h-full transition-all duration-500 rounded-full shadow-[0_0_12px_rgba(59,130,246,0.4)]" 
+      style={{ 
+        width: `${selectedHourIdx === -1 
+          ? (weatherData.forecast[0]?.hour?.[0]?.chanceOfRain ?? 0) 
+          : (weatherData.forecast[0]?.hour?.[selectedHourIdx]?.chanceOfRain ?? 0)
+        }%` 
+      }}
+    />
+  </div>
+</div>                </div>
               </div>
 
               {/* 7-Day Forecast Grid List */}
               <div className="bg-slate-900/40 border border-slate-800/80 rounded-3xl p-6 backdrop-blur-md">
-                <h4 className="text-sm font-bold tracking-wider uppercase text-slate-400 mb-4 flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-blue-400" /> 7-Day Forecast Horizon
-                </h4>
-                <div className="flex flex-col gap-3 overflow-y-auto max-h-[340px] pr-1">
-                  {weatherData.forecast.map((day, idx) => (
-                    <div key={day.date} className="flex items-center justify-between p-3 bg-slate-950/20 rounded-2xl border border-slate-900/50 hover:border-slate-800 transition-colors">
-                      <span className="text-sm font-medium w-24">
-                        {idx === 0 ? 'Today' : new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' })}
-                      </span>
-                      <div className="flex items-center gap-2 text-slate-400 text-xs w-32">
-                        <CloudSun className="w-4 h-4 text-indigo-400 flex-shrink-0" />
-                        <span className="truncate">{day.condition}</span>
-                      </div>
-                      <span className="text-sm font-bold tracking-tight">
-                        <span className="text-slate-100">{Math.round(day.maxTempC)}°</span>
-                        <span className="text-slate-500 ml-1.5">{Math.round(day.minTempC)}°</span>
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+  <h4 className="text-sm font-bold tracking-wider uppercase text-slate-400 mb-4 flex items-center gap-2">
+    <Calendar className="w-4 h-4 text-blue-400" /> 7-Day Forecast Horizon
+  </h4>
+  
+  {/* 🚀 FIXED LOGIC: Custom Webkit-Scrollbar style tags added inside the layout line */}
+  <div className="flex flex-col gap-3 overflow-y-auto max-h-[340px] pr-2
+    [&::-webkit-scrollbar]:w-1.5
+    [&::-webkit-scrollbar-track]:bg-slate-950/40
+    [&::-webkit-scrollbar-track]:rounded-full
+    [&::-webkit-scrollbar-thumb]:bg-blue-600/60
+    [&::-webkit-scrollbar-thumb]:rounded-full
+    hover:[&::-webkit-scrollbar-thumb]:bg-blue-500
+    [scrollbar-width:thin]
+    [scrollbar-color:theme(colors.blue.600/60)_theme(colors.slate.950/40)]">
+    
+    {weatherData.forecast.map((day, idx) => (
+      <div key={day.date} className="flex items-center justify-between p-3 bg-slate-950/20 rounded-2xl border border-slate-900/50 hover:border-slate-800 transition-colors">
+        <span className="text-sm font-medium w-24">
+          {idx === 0 ? 'Today' : new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' })}
+        </span>
+        <div className="flex items-center gap-2 text-slate-400 text-xs w-32">
+          <CloudSun className="w-4 h-4 text-indigo-400 flex-shrink-0" />
+          <span className="truncate">{day.condition}</span>
+        </div>
+        <span className="text-sm font-bold tracking-tight">
+          <span className="text-slate-100">{Math.round(day.maxTempC)}°</span>
+          <span className="text-slate-500 ml-1.5">{Math.round(day.minTempC)}°</span>
+        </span>
+      </div>
+    ))}
+  </div>
+</div>
             </>
           ) : (
             <div className="h-48 flex items-center justify-center text-slate-500 text-sm">
@@ -180,14 +232,18 @@ const [selectedHourIdx, setSelectedHourIdx] = useState<number>(-1); // -1 means 
 <div className="flex-1 w-full h-full relative bg-slate-950">
   {weatherData && (
     <WeatherMap
-      lat={weatherData.location.lat}
-      lon={weatherData.location.lon}
-      cityName={weatherData.location.name}
-      condition={selectedHourIdx === -1 
-        ? weatherData.current.condition 
-        : weatherData.forecast[0]?.hour?.[selectedHourIdx]?.condition || weatherData.current.condition
-      }
-    />
+  lat={weatherData.location.lat}
+  lon={weatherData.location.lon}
+  cityName={weatherData.location.name}
+  condition={selectedHourIdx === -1 
+    ? weatherData.current.condition 
+    : weatherData.forecast[0]?.hour?.[selectedHourIdx]?.condition || weatherData.current.condition
+  }
+  // 🚀 PASS THE STRING STRAIGHT IN!
+  onLocationSelect={(lat, lon) => {
+    handleSearch(`${lat},${lon}`);
+  }}
+/>
   )}
 </div>
         </section>
@@ -220,25 +276,27 @@ const [selectedHourIdx, setSelectedHourIdx] = useState<number>(-1); // -1 means 
 
           {/* Master Range Input Track */}
           <div className="relative pt-2">
-            <input
-              type="range"
-              min="-1"
-              max="23"
-              value={selectedHourIdx}
-              onChange={(e) => setSelectedHourIdx(parseInt(e.target.value, 10))}
-              className="w-full h-2 bg-slate-950 rounded-lg appearance-none cursor-pointer accent-blue-500 border border-slate-800/60"
-            />
-            <div className="w-full flex justify-between text-[10px] font-mono text-slate-600 mt-2 px-1">
-              <span>Live Feed</span>
-              <span>12:00 AM</span>
-              <span>04:00 AM</span>
-              <span>08:00 AM</span>
-              <span>12:00 PM</span>
-              <span>04:00 PM</span>
-              <span>08:00 PM</span>
-              <span>11:00 PM</span>
-            </div>
-          </div>
+  {/* 🚀 Restored back to your original clean, native Tailwind setup */}
+  <input
+    type="range"
+    min="-1"
+    max="23"
+    value={selectedHourIdx}
+    onChange={(e) => setSelectedHourIdx(parseInt(e.target.value, 10))}
+    className="w-full h-2 bg-slate-950 rounded-lg appearance-none cursor-pointer accent-blue-500 border border-slate-800/60"
+  />
+  
+  <div className="w-full flex justify-between text-[10px] font-mono text-slate-600 mt-2 px-1">
+    <span>Live Feed</span>
+    <span>12:00 AM</span>
+    <span>04:00 AM</span>
+    <span>08:00 AM</span>
+    <span>12:00 PM</span>
+    <span>04:00 PM</span>
+    <span>08:00 PM</span>
+    <span>11:00 PM</span>
+  </div>
+</div>
         </footer>
       )}
     </div>

@@ -2,6 +2,7 @@ export interface HourlyForecast {
   time: string;
   tempC: number;
   condition: string;
+  chanceOfRain: number;
 }
 
 export interface ForecastDay {

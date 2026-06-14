@@ -5,6 +5,7 @@ export interface HourlyForecast {
   time: string;
   tempC: number;
   condition: string;
+  chanceOfRain: number; // 🚀 ADDED THIS LINE RIGHT HERE TO LOCK IN TYPES
 }
 
 export interface WeatherData {
@@ -36,7 +37,7 @@ export interface WeatherData {
     condition: string;
     conditionCode: number;
     avgHumidity: number;
-    hour: HourlyForecast[]; // <-- Added right here!
+    hour: HourlyForecast[]; 
   }>;
 }
 
